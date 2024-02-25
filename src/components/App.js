@@ -76,6 +76,7 @@ function App() {
               numQuestions={numQuestions}
               points={points}
               totalPoints={totalPoints}
+              answer={answer}
             />
             <Question
               question={questions[index]}
