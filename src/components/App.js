@@ -7,6 +7,10 @@ import StartScreen from "./StartScreen.js";
 import Question from "./Question.js";
 import NextButton from "./NextButton.js";
 import Progress from "./Progress.js";
+import FinishScreen from "./FinishScreen.js";
+import Footer from "./Footer.js";
+import Timer from "./Timer.js";
+import DateCounter from "./DateCounter.js";
 
 const initialState = {
   questions: [],
@@ -15,7 +19,11 @@ const initialState = {
   index: 0,
   answer: null,
   points: 0,
+  highscore: 0,
+  secondsRemaining: null,
 };
+
+const SEC_PER_QUESTION = 30;
 
 function reducer(state, action) {
   console.log(action, state);
@@ -25,7 +33,11 @@ function reducer(state, action) {
     case "dataFailed":
       return { ...state, status: "Error" };
     case "start":
-      return { ...state, status: "active" };
+      return {
+        ...state,
+        status: "active",
+        secondsRemaining: state.questions.length * SEC_PER_QUESTION,
+      };
     case "newAnswer":
       const question = state.questions.at(state.index);
       return {
@@ -38,16 +50,32 @@ function reducer(state, action) {
       };
     case "nextQuestion":
       return { ...state, index: state.index + 1, answer: null };
+    case "finish":
+      return {
+        ...state,
+        status: "finished",
+        highscore:
+          state.points > state.highscore ? state.points : state.highscore,
+      };
+    case "reset":
+      return { ...initialState, questions: state.questions, status: "ready" };
+    case "tick":
+      return {
+        ...state,
+        secondsRemaining: state.secondsRemaining - 1,
+        status: state.secondsRemaining === 0 ? "finished" : state.status,
+      };
+
     default:
       throw new Error("Unknown Action");
   }
 }
 
 function App() {
-  const [{ questions, status, index, answer, points }, dispatch] = useReducer(
-    reducer,
-    initialState
-  );
+  const [
+    { questions, status, index, answer, points, highscore, secondsRemaining },
+    dispatch,
+  ] = useReducer(reducer, initialState);
   // const { questions, status } = state;\\\
 
   const numQuestions = questions.length;
@@ -57,7 +85,7 @@ function App() {
     fetch("http://localhost:8000/questions")
       .then((res) => res.json())
       .then((data) => dispatch({ type: "dataReceived", payload: data }))
-      .catch((err) => dispatch({ type: "datFailed" }));
+      .catch((err) => dispatch({ type: "dataFailed" }));
   }, []);
 
   return (
@@ -84,13 +112,27 @@ function App() {
               answer={answer}
               points={points}
             />
-            <NextButton
-              dispatch={dispatch}
-              answer={answer}
-              question={questions}
-              index={index}
-            />
+            <Footer>
+              <Timer dispatch={dispatch} secondsRemaining={secondsRemaining} />
+
+              <NextButton
+                dispatch={dispatch}
+                answer={answer}
+                question={questions}
+                numQuestions={numQuestions}
+                index={index}
+              />
+            </Footer>
+            {/* <DateCounter /> */}
           </>
+        )}
+        {status === "finished" && (
+          <FinishScreen
+            points={points}
+            totalPoints={totalPoints}
+            highscore={highscore}
+            dispatch={dispatch}
+          />
         )}
       </Main>
     </div>
