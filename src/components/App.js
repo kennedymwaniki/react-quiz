@@ -10,7 +10,7 @@ import Progress from "./Progress.js";
 import FinishScreen from "./FinishScreen.js";
 import Footer from "./Footer.js";
 import Timer from "./Timer.js";
-import DateCounter from "./DateCounter.js";
+// import DateCounter from "./DateCounter.js";
 
 const initialState = {
   questions: [],
